@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intelligent Dashboard — Client Presentation</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --text: #e8eef4;
+      --muted: #94a3b8;
+      --accent: #2dd4bf;
+      --accent-dim: #14b8a6;
+      --border: #2d3a4d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+    .deck {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .slide {
+      display: none;
+      width: min(1100px, 100%);
+      max-height: calc(100vh - 4rem);
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem 3rem;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.35);
+    }
+    .slide.active { display: block; }
+    .slide h1 {
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      color: var(--text);
+    }
+    .slide h2 {
+      font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+      font-weight: 600;
+      color: var(--accent);
+      margin: 1.5rem 0 0.75rem;
+    }
+    .slide h2:first-of-type { margin-top: 0; }
+    .slide p, .slide li {
+      font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+      line-height: 1.55;
+      color: var(--muted);
+    }
+    .slide p + p { margin-top: 0.85rem; }
+    .slide ul, .slide ol { margin: 0.75rem 0 0 1.35rem; }
+    .slide li { margin: 0.45rem 0; }
+    .slide .tagline {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--accent);
+      font-weight: 500;
+      margin-top: 1rem;
+    }
+    .slide .meta {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .controls {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      z-index: 10;
+    }
+    .controls button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .controls button:hover { border-color: var(--accent); color: var(--accent); }
+    .controls .counter {
+      font-size: 0.8rem;
+      color: var(--muted);
+      min-width: 4.5rem;
+      text-align: center;
+    }
+    .print-hint {
+      position: fixed;
+      top: 0.75rem;
+      right: 1rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      z-index: 10;
+    }
+    @media print {
+      .controls, .print-hint { display: none !important; }
+      body { overflow: visible; background: #fff; }
+      .deck { display: block; padding: 0; height: auto; }
+      .slide {
+        display: block !important;
+        page-break-after: always;
+        max-height: none;
+        border: none;
+        box-shadow: none;
+        border-radius: 0;
+        color: #111;
+        background: #fff;
+      }
+      .slide h1, .slide h2 { color: #0d9488; }
+      .slide p, .slide li { color: #334155; }
+      .slide .tagline { color: #0f766e; }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-hint" aria-hidden="true">Tip: Print → Save as PDF for a downloadable deck</div>
+  <div class="deck" id="deck">
+    <!-- Slide 1 -->
+    <section class="slide active" data-slide="1">
+      <h1>Intelligent Dashboard</h1>
+      <p class="tagline">From fragmented observability to coordinated incident response</p>
+      <p style="margin-top:1.25rem">A unified operations view that correlates signals across monitoring, logging, tracing, change, and workflow tools—mapped to business services and blast radius.</p>
+      <div class="meta">Client presentation deck · Confidential demo narrative</div>
+    </section>
+
+    <!-- Slide 2 -->
+    <section class="slide" data-slide="2">
+      <h1>The real problem is correlation</h1>
+      <p>Enterprises rarely lack tools. They lack a single place to answer: <strong style="color:var(--text)">What is happening right now—and what should we do first?</strong></p>
+      <p>Teams still jump across Datadog, Splunk, APM, ITSM, ERP signals, and chat threads during an incident.</p>
+      <h2>Analogy</h2>
+      <p>Each tool is a radar feed. This platform is the <strong style="color:var(--text)">control tower</strong>: one fused operational picture instead of disconnected screens.</p>
+    </section>
+
+    <!-- Slide 3 -->
+    <section class="slide" data-slide="3">
+      <h1>What we deliver</h1>
+      <h2>Decision intelligence, not another chart wall</h2>
+      <ul>
+        <li><strong style="color:var(--text)">Unify</strong> health, incidents, noise, and tool coverage in one command view</li>
+        <li><strong style="color:var(--text)">Correlate</strong> metrics, logs, traces, deploys, and tickets on one timeline</li>
+        <li><strong style="color:var(--text)">Map</strong> technical failure to business services and dependency blast radius</li>
+        <li><strong style="color:var(--text)">Act</strong> with governed automation (auto vs human-in-the-loop)</li>
+      </ul>
+      <p class="tagline">From signals to decisions—with evidence and accountability.</p>
+    </section>
+
+    <!-- Slide 4 -->
+    <section class="slide" data-slide="4">
+      <h1>Command Center</h1>
+      <h2>Situational awareness in seconds</h2>
+      <ul>
+        <li>Business service health with SLO burn and status</li>
+        <li>Active incidents with severity and likely verdict direction</li>
+        <li>Signal volume: raw alerts vs correlated incidents (noise story)</li>
+        <li>Tool coverage strip (confidence that feeds are live)</li>
+      </ul>
+      <p class="tagline">Demo: use Refresh to regenerate a coherent mock universe—proves the UI is dynamic, not static.</p>
+    </section>
+
+    <!-- Slide 5 -->
+    <section class="slide" data-slide="5">
+      <h1>How we correlate across tools</h1>
+      <h2>Three anchors</h2>
+      <ol>
+        <li><strong style="color:var(--text)">Time</strong> — what changed when (deploy windows, spike onset)</li>
+        <li><strong style="color:var(--text)">Service</strong> — which component and which business capability</li>
+        <li><strong style="color:var(--text)">Change</strong> — releases, config, flags, integrations</li>
+      </ol>
+      <h2>Analogy</h2>
+      <p>Like medical triage: vitals, labs, imaging, and history are separate systems—but diagnosis needs <strong style="color:var(--text)">one timeline</strong> with cited evidence.</p>
+    </section>
+
+    <!-- Slide 6 -->
+    <section class="slide" data-slide="6">
+      <h1>Incident detail &amp; RCA context</h1>
+      <h2>Explainable narrative</h2>
+      <ul>
+        <li>Correlated timeline with source badges (APM, logs, traces, deploy, ticket)</li>
+        <li>Domain hint and rationale—tied to visible signals, not a black box</li>
+        <li>Blast radius: affected service IDs and dependency context</li>
+        <li>Optional assistant context: structured prompt payload for guided investigation</li>
+      </ul>
+      <p>Outcome: faster alignment in war rooms because everyone sees the same evidence chain.</p>
+    </section>
+
+    <!-- Slide 7 -->
+    <section class="slide" data-slide="7">
+      <h1>Services &amp; topology</h1>
+      <h2>From “what broke” to “what else is at risk”</h2>
+      <ul>
+        <li>Mesh-style dependency map with severity reflected on nodes and edges</li>
+        <li>Roll-up to business services and owning teams</li>
+        <li>Side context: SLIs, dependencies, recent incident linkage</li>
+      </ul>
+      <p class="tagline">Compresses questions like “who owns this?” and “is this customer-facing?” into the map itself.</p>
+    </section>
+
+    <!-- Slide 8 -->
+    <section class="slide" data-slide="8">
+      <h1>Trends &amp; reliability</h1>
+      <h2>From reactive firefighting to measurable improvement</h2>
+      <ul>
+        <li>MTTR trajectory and operational quality over time</li>
+        <li>Alert → incident ratio (noise vs real operational load)</li>
+        <li>Repeat offenders and risk/forecast-style rollups for prioritization</li>
+        <li>Executive-friendly scorecard view alongside engineering depth</li>
+      </ul>
+    </section>
+
+    <!-- Slide 9 -->
+    <section class="slide" data-slide="9">
+      <h1>Automation with governance</h1>
+      <h2>Speed without losing enterprise control</h2>
+      <ul>
+        <li><strong style="color:var(--text)">Auto mode</strong> — bounded, lower-risk remediations</li>
+        <li><strong style="color:var(--text)">Human-in-the-loop</strong> — approvals for high blast-radius actions</li>
+        <li>Clear audit narrative: what ran, under what policy, with what outcome</li>
+      </ul>
+      <p>Positioning: AI-assisted operations that respects CAB, risk, and compliance boundaries.</p>
+    </section>
+
+    <!-- Slide 10 -->
+    <section class="slide" data-slide="10">
+      <h1>Why this is a unique solution</h1>
+      <ol>
+        <li><strong style="color:var(--text)">Multi-tool correlation</strong> in one operational story—not siloed dashboards</li>
+        <li><strong style="color:var(--text)">Business-aware impact</strong> — services, SLO burn, ownership, escalation paths</li>
+        <li><strong style="color:var(--text)">Explainability</strong> — evidence-linked timeline and topology context</li>
+        <li><strong style="color:var(--text)">Governed action</strong> — automation where safe, humans where required</li>
+      </ol>
+      <p class="tagline">We are not replacing your observability stack—we are orchestrating it into a command system.</p>
+    </section>
+
+    <!-- Slide 11 -->
+    <section class="slide" data-slide="11">
+      <h1>2-minute executive close</h1>
+      <p>“Fragmentation is the bottleneck. This platform is the decision layer that fuses Datadog, Splunk, APM, ITSM, and service context into one tower view.”</p>
+      <p>“We shorten detection and diagnosis with correlated evidence, and we accelerate safe response with governed automation.”</p>
+      <p class="tagline">One line: <strong style="color:var(--text)">Turn fragmented observability into coordinated, business-aware incident response.</strong></p>
+    </section>
+
+    <!-- Slide 12 -->
+    <section class="slide" data-slide="12">
+      <h1>Anticipated client questions</h1>
+      <ul>
+        <li><strong style="color:var(--text)">How is this different from our existing tools?</strong> It correlates them; it does not rip-and-replace them.</li>
+        <li><strong style="color:var(--text)">Is this only for engineers?</strong> No—depth for ops, business impact clarity for leadership.</li>
+        <li><strong style="color:var(--text)">Why trust recommendations?</strong> Conclusions trace to timeline evidence and dependencies—not opaque scoring.</li>
+        <li><strong style="color:var(--text)">Can it scale across domains?</strong> Yes—tool-agnostic ingestion; value grows as sources and service models expand.</li>
+      </ul>
+    </section>
+
+    <!-- Slide 13 -->
+    <section class="slide" data-slide="13">
+      <h1>Thank you</h1>
+      <p>Next step: align on your toolchain, service catalog, and governance policies so we can map this narrative to your production signals and run a pilot.</p>
+      <div class="meta">Deck file: presentation/Intelligent-Dashboard-Client-Deck.html — open in browser; Print to PDF for sharing.</div>
+    </section>
+  </div>
+
+  <div class="controls">
+    <button type="button" id="prev" aria-label="Previous slide">← Prev</button>
+    <span class="counter" id="counter">1 / 13</span>
+    <button type="button" id="next" aria-label="Next slide">Next →</button>
+  </div>
+
+  <script>
+    (function () {
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const total = slides.length;
+      let idx = 0;
+      const counter = document.getElementById('counter');
+
+      function show(i) {
+        idx = Math.max(0, Math.min(i, total - 1));
+        slides.forEach((s, j) => s.classList.toggle('active', j === idx));
+        counter.textContent = (idx + 1) + ' / ' + total;
+      }
+
+      document.getElementById('prev').addEventListener('click', () => show(idx - 1));
+      document.getElementById('next').addEventListener('click', () => show(idx + 1));
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+          e.preventDefault();
+          show(idx + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          e.preventDefault();
+          show(idx - 1);
+        } else if (e.key === 'Home') {
+          e.preventDefault();
+          show(0);
+        } else if (e.key === 'End') {
+          e.preventDefault();
+          show(total - 1);
+        }
+      });
+
+      show(0);
+    })();
+  </script>
+</body>
+</html>

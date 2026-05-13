@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intelligent Dashboard — Personal widget deep dive (internal)</title>
+  <style>
+    :root {
+      --bg: #0a0e14;
+      --surface: #121a24;
+      --text: #e8eef4;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent2: #2dd4bf;
+      --border: #2d3a4d;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+    .banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      background: linear-gradient(90deg, #7c2d12 0%, #451a03 100%);
+      color: #ffedd5;
+      text-align: center;
+      padding: 0.4rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .deck {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      padding-top: 2.5rem;
+    }
+    .slide {
+      display: none;
+      width: min(1120px, 100%);
+      max-height: calc(100vh - 5rem);
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem 2.5rem;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.45);
+    }
+    .slide.active { display: block; }
+    .slide h1 {
+      font-size: clamp(1.5rem, 3.5vw, 2rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+    .slide h2 {
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      font-weight: 600;
+      color: var(--accent2);
+      margin: 1.25rem 0 0.5rem;
+    }
+    .slide h2:first-of-type { margin-top: 0; }
+    .slide h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 1rem 0 0.35rem;
+    }
+    .slide p, .slide li {
+      font-size: clamp(0.88rem, 1.5vw, 1rem);
+      line-height: 1.5;
+      color: var(--muted);
+    }
+    .slide p + p { margin-top: 0.65rem; }
+    .slide ul, .slide ol { margin: 0.5rem 0 0 1.25rem; }
+    .slide li { margin: 0.35rem 0; }
+    .slide strong.hl { color: var(--text); font-weight: 600; }
+    .slide .tagline {
+      font-size: 0.95rem;
+      color: var(--warn);
+      font-weight: 500;
+      margin-top: 0.75rem;
+    }
+    .slide .meta {
+      margin-top: 1.25rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .mono {
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 0.78rem;
+      background: #0d1624;
+      padding: 0.65rem 0.85rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin: 0.5rem 0;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    table.widget {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.6rem 0 0;
+      font-size: 0.82rem;
+    }
+    table.widget th, table.widget td {
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.5rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.widget th {
+      background: #141c28;
+      color: var(--accent2);
+      font-weight: 600;
+    }
+    .controls {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      z-index: 10;
+    }
+    .controls button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .controls button:hover { border-color: var(--accent2); color: var(--accent2); }
+    .controls .counter {
+      font-size: 0.8rem;
+      color: var(--muted);
+      min-width: 5rem;
+      text-align: center;
+    }
+    .print-hint {
+      position: fixed;
+      top: 2.1rem;
+      right: 1rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+      z-index: 10;
+    }
+    @media print {
+      .banner, .controls, .print-hint { display: none !important; }
+      body { overflow: visible; background: #fff; }
+      .deck { display: block; padding: 0; height: auto; padding-top: 0; }
+      .slide {
+        display: block !important;
+        page-break-after: always;
+        max-height: none;
+        border: none;
+        box-shadow: none;
+        border-radius: 0;
+        color: #111;
+        background: #fff;
+      }
+      .slide h1, .slide h2, .slide h3 { color: #0f766e; }
+      .slide p, .slide li { color: #334155; }
+      .mono { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
+      table.widget th { background: #e2e8f0; color: #0f766e; }
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">INTERNAL ONLY — not for client delivery · widget + data + correlation truth for you</div>
+  <div class="print-hint" aria-hidden="true">Print → Save as PDF</div>
+  <div class="deck" id="deck">
+
+    <section class="slide active" data-slide="1">
+      <h1>Personal deep dive: every widget</h1>
+      <p class="tagline">What feeds it · what you see · how multi-tool correlation is actually achieved in this repo</p>
+      <p>This deck mirrors the <strong class="hl">current React prototype</strong> (ObservIQ-style UI). It is a teaching aid for you—not positioning language for stakeholders.</p>
+      <div class="meta">File: presentation/Intelligent-Dashboard-Personal-Widget-Deep-Dive.html · Open locally in a browser</div>
+    </section>
+
+    <section class="slide" data-slide="2">
+      <h1>Ground rules (read once)</h1>
+      <ul>
+        <li><strong class="hl">No live integrations.</strong> All numbers, timelines, and tool names are generated in the browser by <span class="mono" style="display:inline;padding:0.1rem 0.35rem">createMockData(seed, { scenario })</span>.</li>
+        <li><strong class="hl">Single source of truth:</strong> <span class="mono">MockDataProvider</span> holds one <span class="mono">MockDataBundle</span>. Every page reads via <span class="mono">useMockData()</span> so Refresh + All healthy stay consistent.</li>
+        <li><strong class="hl">Correlation here</strong> means: the <em>same bundle</em> pre-joins related fields (anchors, incident ids, service ids, tool labels). There is <em>no</em> streaming join engine, query service, or trace-id resolver—only deterministic mock builders.</li>
+      </ul>
+      <h2>Key files</h2>
+      <div class="mono">src/data/mockData.ts   — all synthetic inputs
+src/context/MockDataContext.tsx — seed + scenario + refresh
+src/types.ts — TypeScript contracts for rows you render</div>
+    </section>
+
+    <section class="slide" data-slide="3">
+      <h1>How correlation works in this codebase</h1>
+      <h2>What we tell the story with (anchors)</h2>
+      <p>Across Command Center and each incident we surface <strong class="hl">CorrelationAnchorSet</strong>: a shared <em>time window</em>, a synthetic <em>correlation_id</em> string, <em>per-tool shadow ids</em> (Datadog, Splunk, Kentik, Grafana, ServiceNow), and <em>services involved</em> derived from affected business services.</p>
+      <h2>What is NOT happening</h2>
+      <ul>
+        <li>No API calls to Datadog/Splunk/ServiceNow; no OAuth; no webhooks receiving real payloads.</li>
+        <li>Timeline rows (<span class="mono">TimelineSignal</span>) are templates rotated per incident—the <strong class="hl">text</strong> names tools; the <strong class="hl">join</strong> is narrative + shared ids in the same JSON object, not a join algorithm.</li>
+      </ul>
+      <h2>What IS honest to demo</h2>
+      <p>The <strong class="hl">architecture intent</strong>: production would ingest each tool with timestamps + correlation/trace ids + service keys, then persist or stream into a correlation service. This UI shows what that fused object could look like.</p>
+    </section>
+
+    <section class="slide" data-slide="4">
+      <h1>App shell — AppLayout</h1>
+      <table class="widget">
+        <tr><th>Widget / region</th><th>Input data (mock)</th><th>What you see</th><th>Correlation angle</th></tr>
+        <tr>
+          <td>Header KPI strip</td>
+          <td><span class="mono">mockStats</span> (alertCount, incidentCount, correlatedPct)</td>
+          <td>Three headline numbers</td>
+          <td><span class="mono">correlatedPct</span> is a mock scalar story, not computed from live joins.</td>
+        </tr>
+        <tr>
+          <td>Footer tool dots</td>
+          <td><span class="mono">connectedTools[]</span> { name, ok }</td>
+          <td>Green/amber dot per vendor</td>
+          <td>Simulates feed health; in default scenario some tools randomly show amber.</td>
+        </tr>
+        <tr>
+          <td>All healthy</td>
+          <td>Toggles <span class="mono">scenario: 'allHealthy'</span></td>
+          <td>Regenerates entire bundle as green / quiet</td>
+          <td>Forces cross-widget consistency in one re-render.</td>
+        </tr>
+        <tr>
+          <td>Refresh</td>
+          <td>New random <span class="mono">seed</span></td>
+          <td>Whole dashboard changes coherently</td>
+          <td>Proves UI is data-driven, not static screenshots.</td>
+        </tr>
+        <tr>
+          <td>Sidebar note</td>
+          <td>Static copy</td>
+          <td>“Datadog · Splunk · ITSM merged timeline (mock)”</td>
+          <td>Marketing hint only.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="5">
+      <h1>Visual Assistant (floating panel)</h1>
+      <table class="widget">
+        <tr><th>Piece</th><th>Input</th><th>Output</th><th>Correlation</th></tr>
+        <tr>
+          <td>Screen context string</td>
+          <td><span class="mono">buildDashboardContext(pathname, data)</span></td>
+          <td>Compact English summary of current route + key fields</td>
+          <td>Whatever the assistant says is grounded in that string + your question—not on hidden live data.</td>
+        </tr>
+        <tr>
+          <td>Demo chip answers</td>
+          <td><span class="mono">getVisualSimulatedQuestions(path)</span> + exact-match replies in <span class="mono">simulatedLlmQA.ts</span></td>
+          <td>Canned explanations when question text matches</td>
+          <td>Documents intended meaning of widgets for demos.</td>
+        </tr>
+        <tr>
+          <td>Other replies</td>
+          <td><span class="mono">completeVisualAssistant</span> (see <span class="mono">visualAssistantClient.ts</span>)</td>
+          <td>May be stub/LLM path depending on env</td>
+          <td>Still receives the same <span class="mono">buildDashboardContext</span> blob as system context.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="6">
+      <h1>Command Center — top cards</h1>
+      <table class="widget">
+        <tr><th>Widget</th><th>Input</th><th>Shown</th><th>Correlation mechanism</th></tr>
+        <tr>
+          <td>Correlation anchors</td>
+          <td><span class="mono">correlationAnchors</span> (alias of primary incident anchors)</td>
+          <td>Time window, primary id, service chips, per-tool ids</td>
+          <td>Same object also keyed per incident in <span class="mono">correlationAnchorsByIncident</span>; Command Center shows the primary slice for the “hero” story.</td>
+        </tr>
+        <tr>
+          <td>Why this is different</td>
+          <td>Static copy</td>
+          <td>Bullets vs single-vendor APM</td>
+          <td>Narrative only.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="7">
+      <h1>Command Center — health tiles</h1>
+      <table class="widget">
+        <tr><th>Widget</th><th>Input</th><th>Shown</th><th>Correlation mechanism</th></tr>
+        <tr>
+          <td>Each tile</td>
+          <td><span class="mono">businessServices[]</span> — id, name, status, sloBurnPct, sparkline[24]</td>
+          <td>Name, status pill, SLO burn, <span class="mono">MiniSparkline</span></td>
+          <td>Sparkline values are co-generated with status in <span class="mono">createMockData</span> (hot services get higher variance). Drill-down uses same service id for <span class="mono">serviceHealthDrilldowns[id]</span>.</td>
+        </tr>
+        <tr>
+          <td>Tile link</td>
+          <td><span class="mono">/health/:serviceId</span></td>
+          <td>Navigation</td>
+          <td>Same id keys drilldown + trace workspace.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="8">
+      <h1>Command Center — incidents, funnel, events, logs</h1>
+      <table class="widget">
+        <tr><th>Widget</th><th>Input</th><th>Shown</th><th>Correlation mechanism</th></tr>
+        <tr>
+          <td>Active incidents table</td>
+          <td><span class="mono">activeIncidents[]</span></td>
+          <td>id, title, severity, service, verdict, age</td>
+          <td>Rows tie to <span class="mono">incidentDetails[id]</span> and anchors for same id.</td>
+        </tr>
+        <tr>
+          <td>Signal volume funnel</td>
+          <td><span class="mono">signalVolumeSeries[]</span> — day, events, metricAnomalies, alerts, incidents</td>
+          <td>Stacked areas (Recharts)</td>
+          <td>Series built in one loop so ratios stay plausible; demonstrates “events → anomalies → alerts → incidents” as a <strong class="hl">single generator story</strong>.</td>
+        </tr>
+        <tr>
+          <td>Event correlation table</td>
+          <td><span class="mono">eventCorrelationGroups[]</span></td>
+          <td>Signature, layer, tool, counts, ANO/AL/INC ids, status</td>
+          <td>Rows reference <span class="mono">incidentId: primaryId</span> where relevant—explicit mock link from cluster to incident.</td>
+        </tr>
+        <tr>
+          <td>Live log stream</td>
+          <td><span class="mono">mockAlerts[]</span> slice(0,12)</td>
+          <td>ts, severity, source, msg</td>
+          <td>Generated alongside alerts; not joined to incidents by id in code (display sample only).</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="9">
+      <h1>Incidents list — /incidents</h1>
+      <table class="widget">
+        <tr><th>Widget</th><th>Input</th><th>Shown</th><th>Correlation mechanism</th></tr>
+        <tr>
+          <td>SEV summary tiles</td>
+          <td>Derived count from <span class="mono">activeIncidents</span></td>
+          <td>Open count + SEV1/2/3 breakdown</td>
+          <td>Same rows as Command Center table.</td>
+        </tr>
+        <tr>
+          <td>Incident cards</td>
+          <td><span class="mono">activeIncidents</span> + <span class="mono">incidentDetails[id]</span> + <span class="mono">correlationAnchorsByIncident[id]</span></td>
+          <td>Status, team, blast service count, verdict, domain, anchor snippet</td>
+          <td>Each card pulls three bundle slices keyed by the same <span class="mono">INC-*</span> id—this is the closest thing to a real “fused incident object.”</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="10">
+      <h1>Incident detail — /incidents/:id</h1>
+      <table class="widget">
+        <tr><th>Widget</th><th>Input</th><th>Shown</th><th>Correlation mechanism</th></tr>
+        <tr>
+          <td>Correlation anchors (header card)</td>
+          <td><span class="mono">correlationAnchorsByIncident[id]</span></td>
+          <td>Per-incident window + corr id + tool ids</td>
+          <td>Built in mockData from that incident duration + id suffix so each incident looks distinct.</td>
+        </tr>
+        <tr>
+          <td>Auto-triage</td>
+          <td><span class="mono">incidentDetails[id]</span> — rationale, domain</td>
+          <td>Text + domain chip</td>
+          <td>Same object as timeline.</td>
+        </tr>
+        <tr>
+          <td>Correlated timeline</td>
+          <td><span class="mono">incident.signals[]</span> — <span class="mono">TimelineSignal</span> (source includes Kentik)</td>
+          <td>Ordered list: time offset, kind, source, title, detail</td>
+          <td>Templates rotated per incident index; Kentik rows explicitly tie TLS/flow narrative to Splunk/Datadog text in detail strings.</td>
+        </tr>
+        <tr>
+          <td>Topology minimap</td>
+          <td><span class="mono">topologyNodes/edges</span> + blast <span class="mono">Set</span> from <span class="mono">affectedServiceIds</span> via svc→node map</td>
+          <td>Highlighted subgraph</td>
+          <td>Blast derived from same incident’s business service ids—not a fixed checkout path.</td>
+        </tr>
+        <tr>
+          <td>RCA Assistant</td>
+          <td><span class="mono">incidentContextForPrompt(incident, recentDeploys, businessServices)</span></td>
+          <td>Chat UI; seeded Q&amp;A</td>
+          <td>Prompt string embeds flattened timeline + deploys + affected health rows—<strong class="hl">one text join</strong> for the mock LLM path.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="11">
+      <h1>Service health drill-down — /health/:serviceId</h1>
+      <table class="widget">
+        <tr><th>Widget</th><th>Input</th><th>Shown</th><th>Correlation mechanism</th></tr>
+        <tr>
+          <td>All sections</td>
+          <td><span class="mono">serviceHealthDrilldowns[serviceId]</span></td>
+          <td>SLO copy, why not healthy, metrics table (tool column: Datadog / Splunk / Kentik), open incidents list</td>
+          <td>Built in one builder per refresh; tool column <strong class="hl">labels</strong> which synthetic metric row came from which conceptual feed. Links reuse <span class="mono">/traces/:id</span> and <span class="mono">/services</span>.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="12">
+      <h1>Services &amp; topology — /services</h1>
+      <table class="widget">
+        <tr><th>Widget</th><th>Input</th><th>Shown</th><th>Correlation mechanism</th></tr>
+        <tr>
+          <td>TopologyMap</td>
+          <td><span class="mono">topologyNodes</span>, <span class="mono">topologyEdges</span>, <span class="mono">businessServices</span></td>
+          <td>Node severity roll-up, edges colored by target</td>
+          <td>Node severity uses <span class="mono">effectiveTelemetrySeverity</span> + business service roll-up (see <span class="mono">topologyStatus.ts</span>).</td>
+        </tr>
+        <tr>
+          <td>Side panel</td>
+          <td>Hard-coded side panel template keyed by selected node + <span class="mono">primaryIncidentDetail.id</span> for incident string</td>
+          <td>SLIs, deps, incidents snippet</td>
+          <td>Panel text partially static demo; roll-up list uses live <span class="mono">businessServices</span>.</td>
+        </tr>
+        <tr>
+          <td>Coverage &amp; scope card</td>
+          <td><span class="mono">coverageLayers[]</span></td>
+          <td>Live vs planned vs optional capabilities</td>
+          <td>Honest scope card—network/firewall marked planned where applicable.</td>
+        </tr>
+        <tr>
+          <td>User journey overlay</td>
+          <td><span class="mono">userJourney[]</span></td>
+          <td>Step cards + topology <span class="mono">highlightIds</span></td>
+          <td>Each step maps to a <span class="mono">nodeId</span>; highlights subgraph for journey storytelling.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="13">
+      <h1>Traces — /traces/:serviceId</h1>
+      <table class="widget">
+        <tr><th>Widget</th><th>Input</th><th>Shown</th><th>Correlation mechanism</th></tr>
+        <tr>
+          <td>Service picker</td>
+          <td><span class="mono">businessServices</span></td>
+          <td>Dropdown routes to another service id</td>
+          <td>Switches entire <span class="mono">traceViews[serviceId]</span> bundle.</td>
+        </tr>
+        <tr>
+          <td>Flame icicle</td>
+          <td><span class="mono">traceViews[serviceId].flameBars</span></td>
+          <td>Horizontal bars per span row</td>
+          <td>Purely mock geometry; errors tint red.</td>
+        </tr>
+        <tr>
+          <td>Overview tab — multi-tool chart</td>
+          <td><span class="mono">correlatedLayerSeries</span>, <span class="mono">monitoringTools</span>, <span class="mono">layerSignalSamples</span></td>
+          <td>Three vendor cards + line chart + sample rows</td>
+          <td>Series generated with shared random spikes so lines “move together”—<strong class="hl">visual correlation</strong> by coupled PRNG, not by ingested metrics.</td>
+        </tr>
+        <tr>
+          <td>Other tabs</td>
+          <td><span class="mono">traceViews</span> facets (infra, metrics, logs, network, errors, span)</td>
+          <td>Tables / lists per tab</td>
+          <td>All co-generated for that service id in <span class="mono">buildTraceViewsByService</span>.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="14">
+      <h1>Trends &amp; reliability — /trends</h1>
+      <table class="widget">
+        <tr><th>Widget</th><th>Input</th><th>Shown</th><th>Correlation mechanism</th></tr>
+        <tr><td>MTTR line chart</td><td><span class="mono">mttrTrend[]</span></td><td>90d MTTR</td><td>Independent time series from PRNG.</td></tr>
+        <tr><td>Alert/incident ratio bars</td><td><span class="mono">alertIncidentRatio[]</span></td><td>Weekly ratio</td><td>Same generator family as funnel (noise story).</td></tr>
+        <tr><td>Repeat offenders table</td><td><span class="mono">repeatOffenders[]</span></td><td>Service, incidents, alerts</td><td>Mock leaderboard.</td></tr>
+        <tr><td>SLO risk + scorecard</td><td><span class="mono">sloRiskForecast</span>, <span class="mono">executiveScorecard</span></td><td>Forecast strip + KPI cards</td><td>Business rollup mock.</td></tr>
+      </table>
+      <p class="tagline">These panels do not feed back into incident correlation—they are parallel narratives from the same seed.</p>
+    </section>
+
+    <section class="slide" data-slide="15">
+      <h1>Automation — /automation</h1>
+      <table class="widget">
+        <tr><th>Widget</th><th>Input</th><th>Shown</th><th>Correlation mechanism</th></tr>
+        <tr>
+          <td>Mode toggle</td>
+          <td>Local React state filters</td>
+          <td>Auto vs HITL agents + runs</td>
+          <td><span class="mono">automationAgents</span> filtered by <span class="mono">modes</span>; runs filtered by <span class="mono">mode</span>.</td>
+        </tr>
+        <tr>
+          <td>Governance chips</td>
+          <td><span class="mono">governance</span> on agents; <span class="mono">cabTicket</span>, <span class="mono">approverChain</span> on runs</td>
+          <td>CAB, dual control, blast caps</td>
+          <td>Demonstrates policy metadata that would attach to real playbook executions.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="16">
+      <h1>Settings — /settings</h1>
+      <table class="widget">
+        <tr><th>Widget</th><th>Input</th><th>Shown</th><th>Correlation mechanism</th></tr>
+        <tr>
+          <td>Integration grids</td>
+          <td><span class="mono">dataIntegrations[]</span></td>
+          <td>Per tool: layer, ingestion type, status, notes</td>
+          <td>Explains streaming-first vs optional storage—metadata only, no config forms wired.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section class="slide" data-slide="17">
+      <h1>“Correlation” cheat sheet (for your own notes)</h1>
+      <ol>
+        <li><strong class="hl">Same key everywhere:</strong> incident id keys list row, detail object, anchor object, and (where present) event-cluster <span class="mono">incidentId</span>.</li>
+        <li><strong class="hl">Same key for services:</strong> <span class="mono">svc-N</span> ties Command Center tiles, topology roll-up, health drilldown, trace workspace selection.</li>
+        <li><strong class="hl">Time alignment (mock):</strong> anchor windows use <span class="mono">durationMin</span> / opened minutes; timeline uses negative minute offsets from the same incident object.</li>
+        <li><strong class="hl">Cross-tool text:</strong> timeline detail strings explicitly mention Splunk/Datadog/Kentik together—pedagogical correlation for demos.</li>
+        <li><strong class="hl">Traces chart coupling:</strong> infra/app/network series share spike logic in the generator—visual “they moved together.”</li>
+      </ol>
+    </section>
+
+    <section class="slide" data-slide="18">
+      <h1>Refresh &amp; All healthy — what to expect</h1>
+      <ul>
+        <li><strong class="hl">Refresh</strong> picks a new seed → entire <span class="mono">MockDataBundle</span> recomputes. Incident ids, anchor suffixes, chart points, and tables all shift together.</li>
+        <li><strong class="hl">All healthy</strong> sets scenario flag → generators produce green services, empty <span class="mono">activeIncidents</span>, calm series, and stub incident detail on the primary id for anchor card continuity.</li>
+      </ul>
+      <h2>If you revert a feature</h2>
+      <p>Git revert or restore specific files; this deck does not auto-sync—update slides when widgets change.</p>
+      <div class="meta">End of personal deep dive · Use Prev/Next or arrow keys · Home/End jump to ends</div>
+    </section>
+
+  </div>
+
+  <div class="controls">
+    <button type="button" id="prev" aria-label="Previous slide">← Prev</button>
+    <span class="counter" id="counter">1 / 18</span>
+    <button type="button" id="next" aria-label="Next slide">Next →</button>
+  </div>
+
+  <script>
+    (function () {
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const total = slides.length;
+      let idx = 0;
+      const counter = document.getElementById('counter');
+
+      function show(i) {
+        idx = Math.max(0, Math.min(i, total - 1));
+        slides.forEach((s, j) => s.classList.toggle('active', j === idx));
+        counter.textContent = (idx + 1) + ' / ' + total;
+      }
+
+      document.getElementById('prev').addEventListener('click', () => show(idx - 1));
+      document.getElementById('next').addEventListener('click', () => show(idx + 1));
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+          e.preventDefault();
+          show(idx + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          e.preventDefault();
+          show(idx - 1);
+        } else if (e.key === 'Home') {
+          e.preventDefault();
+          show(0);
+        } else if (e.key === 'End') {
+          e.preventDefault();
+          show(total - 1);
+        }
+      });
+
+      show(0);
+    })();
+  </script>
+</body>
+</html>
