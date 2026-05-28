@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --color-obs-bg: #0c0f12;
   --color-obs-surface: #12161c;
   --color-obs-elevated: #181d26;

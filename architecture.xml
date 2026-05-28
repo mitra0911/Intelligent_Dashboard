@@ -1,0 +1,154 @@
+<mxfile host="app.diagrams.net" modified="2026-05-28T08:20:00.000Z" agent="Mozilla/5.0" version="24.7.17" editor="draw.io">
+  <diagram id="arch-page" name="Architecture">
+    <mxGraphModel dx="1600" dy="960" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="t1" value="Intelligent Dashboard - Reference Architecture (Vendor Neutral)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="1150" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="t2" value="Note: External tool signals are mocked in-app for this demo." style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="20" y="50" width="900" height="22" as="geometry"/>
+        </mxCell>
+
+        <!-- Layer headers -->
+        <mxCell id="l1" value="L1 - User Access &amp; Authentication" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="90" width="360" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="l2" value="L2 - Edge Security &amp; Session Enforcement" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="400" y="90" width="430" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="l3" value="L3 - Static Hosting Layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="850" y="90" width="320" height="34" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="l4" value="L4 - Client Application Layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="290" width="560" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="l5" value="L5 - Mock Data &amp; Correlation Engine" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="290" width="570" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="l6" value="L6 - External Tool Signal Emulation (MOCKED)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="540" width="1150" height="34" as="geometry"/>
+        </mxCell>
+
+        <!-- L1 -->
+        <mxCell id="u1" value="Enterprise User Browser" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="145" width="160" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="u2" value="Identity Service&#xa;(Hosted Login, User Pool)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="215" y="145" width="165" height="72" as="geometry"/>
+        </mxCell>
+
+        <!-- L2 -->
+        <mxCell id="e1" value="CDN / Edge Distribution&#xa;(Public URL)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="420" y="145" width="180" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="Web Firewall&#xa;(optional)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="615" y="145" width="120" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="Edge Auth Guard&#xa;(redirect unauth users)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="750" y="145" width="190" height="72" as="geometry"/>
+        </mxCell>
+
+        <!-- L3 -->
+        <mxCell id="s1" value="Private Object Storage&#xa;static dist/ artifacts&#xa;origin access restricted" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="955" y="145" width="210" height="72" as="geometry"/>
+        </mxCell>
+
+        <!-- L4 -->
+        <mxCell id="a1" value="React SPA (Vite)&#xa;Pages: CommandCenter, Incidents, Services, Traces, Trends, Automation, Settings&#xa;Visual Assistant + RCA Assistant (simulated)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="40" y="340" width="520" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- L5 -->
+        <mxCell id="m1" value="MockDataProvider + createMockData(seed, scenario)&#xa;Outputs: incidentDetails, correlationAnchorsByIncident, eventCorrelationGroups, signalVolumeSeries, traceViews, serviceHealthDrilldowns" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="620" y="340" width="540" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="m2" value="Correlation Logic Used&#xa;1) Time-window anchors&#xa;2) correlation_id anchors (+ tool-specific IDs)&#xa;3) Service anchors (serviceId / affectedServiceIds)&#xa;4) Incident-key mapping (INC-* list ↔ detail ↔ anchors ↔ event clusters)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="620" y="440" width="540" height="135" as="geometry"/>
+        </mxCell>
+
+        <!-- L6 -->
+        <mxCell id="x1" value="External Source Signals (MOCKED for demo):&#xa;Datadog (infra/APM), Splunk (logs), Kentik (network), ServiceNow (ITSM/change), Grafana (metrics), AppDynamics/Honeycomb (trace/APM)&#xa;Mock generation file: src/data/mockData.ts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="590" width="1125" height="92" as="geometry"/>
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e100" edge="1" parent="1" source="u1" target="e1" style="endArrow=block;html=1;strokeColor=#4d4d4d;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e101" edge="1" parent="1" source="e2" target="e1" style="endArrow=block;html=1;strokeColor=#4d4d4d;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e102" edge="1" parent="1" source="e1" target="e3" style="endArrow=block;html=1;strokeColor=#4d4d4d;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e103" value="login redirect" edge="1" parent="1" source="e3" target="u2" style="endArrow=block;html=1;strokeColor=#4d4d4d;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e104" value="authenticated session" edge="1" parent="1" source="u2" target="e1" style="endArrow=block;html=1;strokeColor=#4d4d4d;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e105" edge="1" parent="1" source="e3" target="s1" style="endArrow=block;html=1;strokeColor=#4d4d4d;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e106" edge="1" parent="1" source="s1" target="a1" style="endArrow=block;html=1;strokeColor=#4d4d4d;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e107" edge="1" parent="1" source="a1" target="m1" style="endArrow=block;html=1;strokeColor=#4d4d4d;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e108" edge="1" parent="1" source="x1" target="m1" style="endArrow=block;html=1;strokeColor=#4d4d4d;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="desc-page" name="Layer Description">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="d1" value="Architecture Description (Vendor Neutral)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="900" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d2" value="Important: External tool data is NOT live-ingested in this demo.&#xa;All tool signals are mocked in src/data/mockData.ts and normalized into one bundle for UI rendering + correlation storytelling." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="65" width="1200" height="68" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d3" value="L1 - User Access &amp; Authentication&#xa;• User opens the public edge URL in browser.&#xa;• Hosted login enforces credential-based sign-in before app access." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="20" y="155" width="580" height="96" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d4" value="L2 - Edge Security &amp; Session Enforcement&#xa;• Edge layer validates auth state on requests.&#xa;• Unauthenticated traffic is redirected to login.&#xa;• Optional firewall controls can add additional protection." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="620" y="155" width="600" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d5" value="L3 - Static Hosting Layer&#xa;• Static SPA artifacts are stored privately.&#xa;• Edge distribution fetches origin objects via restricted origin access." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="20" y="275" width="580" height="88" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d6" value="L4 - Client Application Layer&#xa;• React SPA renders all dashboard pages and assistants.&#xa;• App state is consumed from a centralized mock-data context." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="620" y="275" width="600" height="88" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d7" value="L5 - Mock Data &amp; Correlation Engine&#xa;• createMockData(seed, scenario) generates a coherent data universe.&#xa;• Correlation anchors include time window, correlation IDs, service IDs, and incident mappings.&#xa;• This ensures all pages narrate the same incident context consistently." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="20" y="380" width="1200" height="115" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d8" value="L6 - External Tool Signal Emulation (MOCKED)&#xa;• Tool names represented: Datadog, Splunk, Kentik, ServiceNow, Grafana, AppDynamics/Honeycomb.&#xa;• Their telemetry/events are currently synthetic and generated in src/data/mockData.ts." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="20" y="510" width="1200" height="92" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d9" value="Future-ready extension&#xa;• Replace mock generators with live connectors (API/Webhook/Streaming) from each tool.&#xa;• Keep same correlation anchor model so UI pages do not require architectural rewrite." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="20" y="620" width="1200" height="84" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
